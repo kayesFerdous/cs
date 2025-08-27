@@ -1,65 +1,128 @@
 # CyberForge WebShield
 
-Defensive cybersecurity project with a FastAPI backend and Next.js 13+ frontend (TailwindCSS). Focuses on payload scanning, rule-based and optional AI/ML classification, Safe Mode controls, and a real-time dashboard.
+A simplified cybersecurity web application built with Next.js that provides real-time threat detection and monitoring. This streamlined version focuses on core security features without unnecessary complexity.
 
-## Stack
-- Backend: FastAPI, Pydantic v2, Uvicorn, SQLite (built-in), optional TensorFlow/Keras
-- Frontend: Next.js 13 (App Router), React, TypeScript, TailwindCSS, Chart.js
+## Features
+
+- **Real-time Threat Scanning**: Scan payloads for XSS, SQL injection, and other security threats
+- **Rule-based Detection**: Regex patterns for common attack vectors
+- **Configurable Sensitivity**: Three levels - Low, Medium, and Paranoid
+- **Safe Mode**: Option to log threats without blocking them
+- **Live Dashboard**: Real-time monitoring interface
+- **Rate Limiting**: Built-in protection against API abuse
+- **DDoS Testing**: Built-in testing tools for rate limiting
+- **Persistent Logging**: JSON-based log storage
+
+## Technologies Used
+
+- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
+- **Database**: Simple JSON file storage
+- **Charts**: Chart.js with react-chartjs-2
+- **Rate Limiting**: Custom implementation
+
+## Project Structure
+
+```
+├── app/
+│   ├── api/           # Next.js API routes
+│   │   ├── config/    # Configuration management
+│   │   ├── health/    # Health check endpoint
+│   │   ├── logs/      # Log retrieval
+│   │   ├── scan/      # Threat scanning
+│   │   ├── rate-limiting/ # Rate limiting controls
+│   │   └── rate-limit-stats/ # Rate limiting stats
+│   ├── ddos-test/     # DDoS testing page
+│   ├── layout.tsx     # Root layout
+│   └── page.tsx       # Main dashboard
+├── components/        # React components
+├── lib/              # Utility libraries
+│   ├── config.ts     # Configuration management
+│   ├── database.ts   # JSON file operations
+│   ├── rate-limiter.ts # Rate limiting utilities
+│   ├── rules.ts      # Security rule scanning
+│   ├── api.ts        # API client functions
+│   └── types.ts      # TypeScript types
+├── data/             # JSON log storage
+└── styles/           # CSS styles
+```
 
 ## Quick Start
 
-### 1) Backend
 ```bash
-cd backend
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
-Backend will run at `http://localhost:8000`.
+# Install dependencies
+npm install
 
-### 2) Frontend
-```bash
-cd frontend
-pnpm install || npm install || yarn
-pnpm dev || npm run dev || yarn dev
-```
-Frontend will run at `http://localhost:3000`.
-
-## Features
-- Rule-based detection for common XSS and SQLi patterns
-- Optional AI/ML classification (if TensorFlow/Keras available); otherwise heuristic fallback
-- Configurable Safe Mode and Sensitivity (Low, Medium, Paranoid)
-- Real-time logs via WebSocket stream
-- Dashboard with live table, alerts, controls, and trend chart
-
-## Project Structure
-```
-backend/
-  app/
-    main.py
-    config.py
-    database.py
-    rules.py
-    ml_model.py
-    schemas.py
-    websocket_manager.py
-  requirements.txt
-frontend/
-  app/
-  components/
-  lib/
-  public/
-  package.json
-  tailwind.config.js
-  postcss.config.js
-  tsconfig.json
-  next.config.js
+# Start development server
+npm run dev
 ```
 
-## Notes
-- TensorFlow is optional and not pinned in requirements due to size. If you have a model, place it at `backend/models/webshield_model.h5`.
-- CORS is enabled for `http://localhost:3000`.
-- Logs are stored in SQLite at `backend/data/webshield.db`.
+The application will be available at `http://localhost:3000`
+
+## API Endpoints
+
+### Configuration
+
+- `GET /api/config` - Get current configuration
+- `POST /api/config` - Update configuration
+
+### Scanning
+
+- `POST /api/scan` - Scan a payload for threats
+
+### Logs
+
+- `GET /api/logs?limit=200` - Retrieve threat logs
+
+### Monitoring
+
+- `GET /api/health` - Health check
+- `GET /api/rate-limit-stats` - Rate limiting information
+- `GET /api/rate-limiting` - Get rate limiting status
+- `POST /api/rate-limiting` - Toggle rate limiting
+
+## Rate Limits
+
+- Health check: 100 requests/minute
+- Configuration (GET): 30 requests/minute
+- Configuration (POST): 10 requests/minute
+- Logs: 50 requests/minute
+- Scan: 10 requests/minute
+
+## Security Features
+
+### Rule-based Detection
+
+- XSS patterns (script tags, event handlers, javascript: URLs)
+- SQL injection patterns (UNION SELECT, DROP TABLE, OR 1=1)
+- Command injection patterns
+- Path traversal attempts
+- Generic dangerous patterns (iframe, svg, curl, wget)
+
+### Threat Classification
+
+- **Clean**: No threats detected
+- **Suspicious**: Some threats detected based on sensitivity
+- **High Threat**: Severe threats that require immediate attention
+
+### Sensitivity Levels
+
+- **Low**: Only escalates obvious threats
+- **Medium**: Balanced detection (default)
+- **Paranoid**: Aggressive detection of potential threats
+
+## DDoS Testing
+
+The application includes a built-in DDoS testing feature at `/ddos-test` that allows you to:
+
+- Test rate limiting effectiveness
+- Simulate attack scenarios
+- Monitor system response to high request volumes
+- Toggle rate limiting on/off for testing
+
+## Data Storage
+
+The application uses simple JSON file storage at `data/logs.json` for persistence. This keeps the project simple while maintaining functionality.
 
 ## Security
+
 This project is strictly defensive. No offensive tooling is included.

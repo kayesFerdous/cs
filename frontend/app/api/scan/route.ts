@@ -3,7 +3,6 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getConfig } from "../../../lib/config";
 import { insertLog } from "../../../lib/database";
-import { predictScore } from "../../../lib/ml-model";
 import {
   createRateLimitResponse,
   getClientId,
@@ -35,17 +34,9 @@ export async function POST(request: NextRequest) {
 
     const [safe_mode, sensitivity] = getConfig();
     const [rule_hits, rule_severity] = scanRules(payload, sensitivity);
-    const [ml_score, ml_label] = predictScore(payload);
 
-    // Combine decisions: High Threat if either says so; Suspicious if either says Suspicious
-    let final_class = rule_severity;
-    if (ml_label) {
-      if (ml_label === "High Threat" || final_class === "High Threat") {
-        final_class = "High Threat";
-      } else if (ml_label === "Suspicious" || final_class === "Suspicious") {
-        final_class = "Suspicious";
-      }
-    }
+    // Use rule-based classification only (simplified)
+    const final_class = rule_severity;
 
     const action =
       safe_mode && final_class === "High Threat" ? "logged-only" : "allowed";
@@ -57,7 +48,7 @@ export async function POST(request: NextRequest) {
       payload,
       classification: final_class,
       rule_hits,
-      ml_score,
+      ml_score: null,
       sensitivity,
       safe_mode,
     };
@@ -67,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       classification: final_class,
       rule_hits,
-      ml_score,
+      ml_score: null,
       sensitivity,
       safe_mode,
       action,

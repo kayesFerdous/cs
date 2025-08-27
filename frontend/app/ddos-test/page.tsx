@@ -15,6 +15,7 @@ export default function DDoSTestPage() {
   });
 
   // Use useRef to store the interval reference
+  // Stores the interval timer so you can stop the attack when needed.
   const attackIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load initial rate limiting status
