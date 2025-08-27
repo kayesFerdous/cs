@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchConfig, setConfig, submitPayload, fetchLogs } from "../lib/api";
-import { LogTable } from "../components/LogTable";
-import { Controls } from "../components/Controls";
+import { useEffect, useMemo, useState } from "react";
 import { Alerts } from "../components/Alerts";
+import { Controls } from "../components/Controls";
+import { LogTable } from "../components/LogTable";
 import { TrendChart } from "../components/TrendChart";
-
-const WS_BASE = process.env.NEXT_PUBLIC_WS_BASE || "ws://localhost:8000";
+import { fetchConfig, fetchLogs, setConfig, submitPayload } from "../lib/api";
 
 export default function Page() {
   const [payload, setPayload] = useState("");
   const [safeMode, setSafeMode] = useState(true);
-  const [sensitivity, setSensitivity] = useState<"Low" | "Medium" | "Paranoid">("Medium");
+  const [sensitivity, setSensitivity] = useState<"Low" | "Medium" | "Paranoid">(
+    "Medium"
+  );
   const [logs, setLogs] = useState<any[]>([]);
-  const wsRef = useRef<WebSocket | null>(null);
 
+  // Load initial data
   useEffect(() => {
     (async () => {
       const cfg = await fetchConfig();
@@ -26,27 +26,11 @@ export default function Page() {
     })();
   }, []);
 
-  useEffect(() => {
-    const ws = new WebSocket(`${WS_BASE}/ws/logs`);
-    wsRef.current = ws;
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        if (msg?.type === "log" && msg?.data) {
-          setLogs((prev) => [msg.data, ...prev].slice(0, 200));
-        }
-      } catch {}
-    };
-    ws.onclose = () => {
-      wsRef.current = null;
-    };
-    return () => {
-      ws.close();
-    };
-  }, []);
-
   const threatCounts = useMemo(() => {
-    const counts = { Clean: 0, Suspicious: 0, "High Threat": 0 } as Record<string, number>;
+    const counts = { Clean: 0, Suspicious: 0, "High Threat": 0 } as Record<
+      string,
+      number
+    >;
     logs.forEach((l) => {
       counts[l.classification] = (counts[l.classification] || 0) + 1;
     });
@@ -57,16 +41,51 @@ export default function Page() {
     if (!payload.trim()) return;
     await submitPayload(payload);
     setPayload("");
+    // Refresh logs immediately after scanning
+    try {
+      const freshLogs = await fetchLogs();
+      setLogs(freshLogs);
+    } catch (error) {
+      console.error("Error refreshing logs:", error);
+    }
   }
 
-  async function onUpdateConfig(nextSafe: boolean, nextSensitivity: "Low" | "Medium" | "Paranoid") {
-    const updated = await setConfig({ safe_mode: nextSafe, sensitivity: nextSensitivity });
+  async function onUpdateConfig(
+    nextSafe: boolean,
+    nextSensitivity: "Low" | "Medium" | "Paranoid"
+  ) {
+    const updated = await setConfig({
+      safe_mode: nextSafe,
+      sensitivity: nextSensitivity,
+    });
     setSafeMode(updated.safe_mode);
     setSensitivity(updated.sensitivity);
   }
 
   return (
     <main className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">CyberForge WebShield</h1>
+        <div className="flex space-x-2">
+          <a
+            href="/ddos-test"
+            className="px-4 py-2 bg-red-600 hover:bg-red-500 rounded text-sm"
+          >
+            DDoS Test
+          </a>
+          <button
+            onClick={async () => {
+              const freshLogs = await fetchLogs();
+              setLogs(freshLogs);
+            }}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-500 rounded text-sm"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
       <Controls
         safeMode={safeMode}
         sensitivity={sensitivity}

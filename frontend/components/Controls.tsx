@@ -14,7 +14,9 @@ export function Controls({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-semibold">Controls</h2>
-          <p className="text-xs text-slate-400">Safe Mode prevents execution of high-risk requests.</p>
+          <p className="text-xs text-slate-400">
+            Safe Mode prevents execution of high-risk requests.
+          </p>
         </div>
       </div>
       <div className="flex flex-wrap gap-4 items-center">
